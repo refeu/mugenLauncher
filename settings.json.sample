@@ -1,0 +1,12 @@
+{
+    "DataDir":  "data",
+    "MugenDirectory":  "C:\\mugen",
+    "DataDirToReplace":  "mugen1",
+    "MugenExe":  "mugen.exe",
+    "DirectoriesToReplace":  [
+        "chars",
+        "font",
+        "sound",
+        "stages"
+    ]
+}
