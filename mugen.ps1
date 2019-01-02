@@ -11,14 +11,19 @@ if ($romName -eq "") {
 
 function CreateDirLink([string] $link, [string] $dest) {
     if (Test-Path $link) {        
-        Rename-Item $link "$(Split-Path $link -Leaf).bak"
+        Rename-Item $link "$(Split-Path $link -Leaf).bak" -Force
     }
     
-    Start-Process "cmd" -ArgumentList "/c", "mklink", "/d", "`"$link`"", "`"$dest`"" -Wait -NoNewWindow
+    if (Test-Path $dest) {
+        Start-Process "cmd" -ArgumentList "/c", "mklink", "/d", "`"$link`"", "`"$dest`"" -Wait -NoNewWindow
+    }
 }
 
 function RestoreDir([string] $dir) {
-    Start-Process "cmd" -ArgumentList "/c", "rd", "`"$dir`"" -Wait -NoNewWindow
+    if (Test-Path $dir) {
+        Start-Process "cmd" -ArgumentList "/c", "rd", "`"$dir`"" -Wait -NoNewWindow    
+    }
+
     [string] $backup = "$dir.bak"
 
     if (Test-Path $backup) {
@@ -29,8 +34,17 @@ function RestoreDir([string] $dir) {
 [string] $romDirectory = Split-Path $romName -Parent
 
 $Settings.DirectoriesToReplace | ForEach-Object { CreateDirLink (Join-Path $Settings.MugenDirectory $_) (Join-Path $romDirectory $_) }
-[string] $dataToReplacePath = Join-Path (Join-Path $Settings.MugenDirectory $Settings.DataDir) $Settings.DataDirToReplace
-CreateDirLink $dataToReplacePath (Join-Path $romDirectory $Settings.DataDirToReplace)
+
+[string] $dataFolderInRomDir = Join-Path $romDirectory $Settings.DataDir
+[string] $dataToReplacePath = ""
+
+if (Test-Path $dataFolderInRomDir -PathType Container) {
+    $dataToReplacePath = Join-Path $Settings.MugenDirectory $Settings.DataDir
+    CreateDirLink $dataToReplacePath $dataFolderInRomDir
+} else {
+    $dataToReplacePath = Join-Path (Join-Path $Settings.MugenDirectory $Settings.DataDir) $Settings.DataDirToReplace
+    CreateDirLink $dataToReplacePath (Join-Path $romDirectory $Settings.DataDirToReplace)
+}
 
 Push-Location $Settings.MugenDirectory
 Start-Process $Settings.MugenExe -Wait
